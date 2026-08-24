@@ -72,7 +72,9 @@ fn queue_overflow_drops_the_oldest_and_reports() {
     assert!(body.contains("\"third\""));
 
     let messages = collector.messages();
-    assert!(messages.iter().any(|message| message.contains("queue full")));
+    assert!(messages
+        .iter()
+        .any(|message| message.contains("queue full")));
 }
 
 #[test]
