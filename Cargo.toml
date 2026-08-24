@@ -1,0 +1,22 @@
+[package]
+name = "topstats-analytics"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+description = "Official TopStats Analytics SDK for Rust. Batching, retries, and feature flags."
+license = "MIT"
+repository = "https://github.com/top-stats/analytics-rust-sdk"
+homepage = "https://docs.topstats.gg/docs/analytics"
+keywords = ["analytics", "topstats", "events"]
+categories = ["api-bindings"]
+
+# Rust has no HTTP, TLS, or JSON in the standard library, so this crate cannot
+# be zero-dependency like the Node, Python, Go, and PHP SDKs. These three are
+# the deliberate minimum.
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+ureq = "2"
+
+[lib]
+name = "topstats_analytics"
