@@ -40,7 +40,11 @@ fn retries_429_then_succeeds() {
 fn retries_5xx_then_succeeds() {
     let transport = FakeTransport::scripted(vec![status(503), status(500), accepted()]);
     let collector = ErrorCollector::new();
-    let client = client_with(Arc::clone(&transport), &collector, SleepRecorder::new().as_sleeper());
+    let client = client_with(
+        Arc::clone(&transport),
+        &collector,
+        SleepRecorder::new().as_sleeper(),
+    );
 
     client.capture("event", None, CaptureOptions::default());
     client.flush();
@@ -53,7 +57,11 @@ fn retries_5xx_then_succeeds() {
 fn retries_network_errors() {
     let transport = FakeTransport::scripted(vec![Scripted::NetworkError, accepted()]);
     let collector = ErrorCollector::new();
-    let client = client_with(Arc::clone(&transport), &collector, SleepRecorder::new().as_sleeper());
+    let client = client_with(
+        Arc::clone(&transport),
+        &collector,
+        SleepRecorder::new().as_sleeper(),
+    );
 
     client.capture("event", None, CaptureOptions::default());
     client.flush();
@@ -107,7 +115,11 @@ fn permanent_statuses_are_never_retried() {
 fn gives_up_after_max_retries_and_reports() {
     let transport = FakeTransport::scripted(vec![status(503)]);
     let collector = ErrorCollector::new();
-    let client = client_with(Arc::clone(&transport), &collector, SleepRecorder::new().as_sleeper());
+    let client = client_with(
+        Arc::clone(&transport),
+        &collector,
+        SleepRecorder::new().as_sleeper(),
+    );
 
     client.capture("event", None, CaptureOptions::default());
     client.flush();
@@ -121,7 +133,11 @@ fn gives_up_after_max_retries_and_reports() {
 fn the_api_key_never_appears_in_error_output() {
     let transport = FakeTransport::scripted(vec![Scripted::NetworkError]);
     let collector = ErrorCollector::new();
-    let client = client_with(Arc::clone(&transport), &collector, SleepRecorder::new().as_sleeper());
+    let client = client_with(
+        Arc::clone(&transport),
+        &collector,
+        SleepRecorder::new().as_sleeper(),
+    );
 
     client.capture("event", None, CaptureOptions::default());
     client.flush();

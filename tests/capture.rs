@@ -26,9 +26,17 @@ fn parsed_events(body: &str) -> Vec<Value> {
 fn capture_sends_the_batch_shape_with_auth_headers() {
     let transport = FakeTransport::always_accepted();
     let collector = ErrorCollector::new();
-    let client = client_with(Arc::clone(&transport), &collector, SleepRecorder::new().as_sleeper());
+    let client = client_with(
+        Arc::clone(&transport),
+        &collector,
+        SleepRecorder::new().as_sleeper(),
+    );
 
-    client.capture("player_join", properties(&[("mode", json!("survival"))]), CaptureOptions::default());
+    client.capture(
+        "player_join",
+        properties(&[("mode", json!("survival"))]),
+        CaptureOptions::default(),
+    );
     client.flush();
 
     assert_eq!(transport.request_count(), 1);
@@ -47,7 +55,11 @@ fn capture_sends_the_batch_shape_with_auth_headers() {
 fn context_maps_to_the_underscore_fields() {
     let transport = FakeTransport::always_accepted();
     let collector = ErrorCollector::new();
-    let client = client_with(Arc::clone(&transport), &collector, SleepRecorder::new().as_sleeper());
+    let client = client_with(
+        Arc::clone(&transport),
+        &collector,
+        SleepRecorder::new().as_sleeper(),
+    );
 
     client.capture(
         "purchase",
@@ -72,7 +84,11 @@ fn context_maps_to_the_underscore_fields() {
 fn unset_optionals_are_omitted_not_null() {
     let transport = FakeTransport::always_accepted();
     let collector = ErrorCollector::new();
-    let client = client_with(Arc::clone(&transport), &collector, SleepRecorder::new().as_sleeper());
+    let client = client_with(
+        Arc::clone(&transport),
+        &collector,
+        SleepRecorder::new().as_sleeper(),
+    );
 
     client.capture("bare", None, CaptureOptions::default());
     client.flush();
@@ -99,7 +115,10 @@ fn default_source_applies_and_explicit_source_wins() {
         .flush_at(1_000)
         .default_source("shard-1")
         .on_error(Arc::new(move |error| {
-            sink.errors.lock().expect("errors lock").push(error.to_string());
+            sink.errors
+                .lock()
+                .expect("errors lock")
+                .push(error.to_string());
         }))
         .build()
         .expect("client builds");
@@ -125,7 +144,11 @@ fn default_source_applies_and_explicit_source_wins() {
 fn events_buffer_until_flush() {
     let transport = FakeTransport::always_accepted();
     let collector = ErrorCollector::new();
-    let client = client_with(Arc::clone(&transport), &collector, SleepRecorder::new().as_sleeper());
+    let client = client_with(
+        Arc::clone(&transport),
+        &collector,
+        SleepRecorder::new().as_sleeper(),
+    );
 
     client.capture("one", None, CaptureOptions::default());
     client.capture("two", None, CaptureOptions::default());

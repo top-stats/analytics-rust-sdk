@@ -43,9 +43,11 @@ pub(crate) fn now_wire_timestamp() -> Result<String, Error> {
 }
 
 fn format_system_time(instant: SystemTime) -> Result<String, Error> {
-    let since_epoch = instant.duration_since(UNIX_EPOCH).map_err(|_| Error::Validation {
-        message: "timestamps before 1970 are not supported".to_owned(),
-    })?;
+    let since_epoch = instant
+        .duration_since(UNIX_EPOCH)
+        .map_err(|_| Error::Validation {
+            message: "timestamps before 1970 are not supported".to_owned(),
+        })?;
 
     let (date, time_of_day) = split_epoch(since_epoch);
 

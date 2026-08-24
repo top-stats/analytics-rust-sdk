@@ -15,9 +15,7 @@ mod timestamp;
 mod transport;
 
 pub use client::{Client, ClientBuilder};
-pub use constants::{
-    DEFAULT_HOST, MAX_BATCH_SIZE, MAX_BODY_BYTES, MAX_EVENT_BYTES, VERSION,
-};
+pub use constants::{DEFAULT_HOST, MAX_BATCH_SIZE, MAX_BODY_BYTES, MAX_EVENT_BYTES, VERSION};
 pub use error::{Error, ErrorHandler};
 pub use event::CaptureOptions;
 pub use flags::{EvaluateInput, FlagResult};

@@ -108,9 +108,7 @@ fn validate_property_keys(properties: &Map<String, Value>) -> Result<(), Error> 
     for key in properties.keys() {
         if key.is_empty() || key.len() > MAX_PROPERTY_KEY_LENGTH {
             return Err(Error::Validation {
-                message: format!(
-                    "property keys must be 1 to {MAX_PROPERTY_KEY_LENGTH} characters"
-                ),
+                message: format!("property keys must be 1 to {MAX_PROPERTY_KEY_LENGTH} characters"),
             });
         }
     }

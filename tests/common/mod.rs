@@ -15,8 +15,15 @@ pub struct RecordedRequest {
 }
 
 pub enum Scripted {
-    Ok { status: u16, body: String },
-    OkWithRetryAfter { status: u16, body: String, retry_after: String },
+    Ok {
+        status: u16,
+        body: String,
+    },
+    OkWithRetryAfter {
+        status: u16,
+        body: String,
+        retry_after: String,
+    },
     NetworkError,
 }
 
@@ -54,14 +61,21 @@ impl FakeTransport {
 
 impl Transport for FakeTransport {
     fn post(&self, url: &str, api_key: &str, body: &str) -> Result<TransportResponse, Error> {
-        self.requests.lock().expect("requests lock").push(RecordedRequest {
-            url: url.to_owned(),
-            api_key: api_key.to_owned(),
-            body: body.to_owned(),
-        });
+        self.requests
+            .lock()
+            .expect("requests lock")
+            .push(RecordedRequest {
+                url: url.to_owned(),
+                api_key: api_key.to_owned(),
+                body: body.to_owned(),
+            });
 
         let mut script = self.script.lock().expect("script lock");
-        let step = if script.len() > 1 { script.remove(0) } else { script_first(&script) };
+        let step = if script.len() > 1 {
+            script.remove(0)
+        } else {
+            script_first(&script)
+        };
 
         match step {
             Scripted::Ok { status, body } => Ok(TransportResponse {
@@ -69,7 +83,11 @@ impl Transport for FakeTransport {
                 body,
                 retry_after: None,
             }),
-            Scripted::OkWithRetryAfter { status, body, retry_after } => Ok(TransportResponse {
+            Scripted::OkWithRetryAfter {
+                status,
+                body,
+                retry_after,
+            } => Ok(TransportResponse {
                 status,
                 body,
                 retry_after: Some(retry_after),
@@ -87,7 +105,11 @@ fn script_first(script: &[Scripted]) -> Scripted {
             status: *status,
             body: body.clone(),
         },
-        Scripted::OkWithRetryAfter { status, body, retry_after } => Scripted::OkWithRetryAfter {
+        Scripted::OkWithRetryAfter {
+            status,
+            body,
+            retry_after,
+        } => Scripted::OkWithRetryAfter {
             status: *status,
             body: body.clone(),
             retry_after: retry_after.clone(),
@@ -146,7 +168,10 @@ pub fn client_with(
         .flush_at(1_000)
         .flush_interval(Duration::from_secs(3_600))
         .on_error(Arc::new(move |error| {
-            sink.errors.lock().expect("errors lock").push(error.to_string());
+            sink.errors
+                .lock()
+                .expect("errors lock")
+                .push(error.to_string());
         }))
         .build()
         .expect("client builds")

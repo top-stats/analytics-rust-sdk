@@ -19,7 +19,11 @@ fn flags_response() -> Scripted {
 fn evaluate_sends_camel_case_fields_and_parses_the_response() {
     let transport = FakeTransport::scripted(vec![flags_response()]);
     let collector = ErrorCollector::new();
-    let client = client_with(Arc::clone(&transport), &collector, SleepRecorder::new().as_sleeper());
+    let client = client_with(
+        Arc::clone(&transport),
+        &collector,
+        SleepRecorder::new().as_sleeper(),
+    );
 
     let flags = client
         .evaluate(EvaluateInput {
@@ -51,7 +55,11 @@ fn keys_with_colons_and_spaces_are_sent_not_rejected() {
     // a real bug in an earlier SDK. These must reach the wire.
     let transport = FakeTransport::scripted(vec![flags_response()]);
     let collector = ErrorCollector::new();
-    let client = client_with(Arc::clone(&transport), &collector, SleepRecorder::new().as_sleeper());
+    let client = client_with(
+        Arc::clone(&transport),
+        &collector,
+        SleepRecorder::new().as_sleeper(),
+    );
 
     let outcome = client.evaluate(EvaluateInput {
         keys: Some(vec!["billing:v2".to_owned(), "new checkout".to_owned()]),
@@ -68,7 +76,11 @@ fn keys_with_colons_and_spaces_are_sent_not_rejected() {
 fn is_enabled_returns_true_only_for_an_enabled_flag() {
     let transport = FakeTransport::scripted(vec![flags_response()]);
     let collector = ErrorCollector::new();
-    let client = client_with(Arc::clone(&transport), &collector, SleepRecorder::new().as_sleeper());
+    let client = client_with(
+        Arc::clone(&transport),
+        &collector,
+        SleepRecorder::new().as_sleeper(),
+    );
 
     assert!(client.is_enabled("new-checkout", EvaluateInput::default()));
 }
@@ -77,7 +89,11 @@ fn is_enabled_returns_true_only_for_an_enabled_flag() {
 fn is_enabled_is_false_on_any_failure() {
     let transport = FakeTransport::scripted(vec![Scripted::NetworkError]);
     let collector = ErrorCollector::new();
-    let client = client_with(Arc::clone(&transport), &collector, SleepRecorder::new().as_sleeper());
+    let client = client_with(
+        Arc::clone(&transport),
+        &collector,
+        SleepRecorder::new().as_sleeper(),
+    );
 
     assert!(!client.is_enabled("anything", EvaluateInput::default()));
 }
@@ -89,7 +105,11 @@ fn is_enabled_is_false_for_a_missing_flag() {
         body: "{\"flags\":{}}".to_owned(),
     }]);
     let collector = ErrorCollector::new();
-    let client = client_with(Arc::clone(&transport), &collector, SleepRecorder::new().as_sleeper());
+    let client = client_with(
+        Arc::clone(&transport),
+        &collector,
+        SleepRecorder::new().as_sleeper(),
+    );
 
     assert!(!client.is_enabled("unknown", EvaluateInput::default()));
 }
@@ -98,7 +118,11 @@ fn is_enabled_is_false_for_a_missing_flag() {
 fn evaluate_rejects_over_200_keys_client_side() {
     let transport = FakeTransport::always_accepted();
     let collector = ErrorCollector::new();
-    let client = client_with(Arc::clone(&transport), &collector, SleepRecorder::new().as_sleeper());
+    let client = client_with(
+        Arc::clone(&transport),
+        &collector,
+        SleepRecorder::new().as_sleeper(),
+    );
 
     let keys: Vec<String> = (0..201).map(|index| format!("flag-{index}")).collect();
     let outcome = client.evaluate(EvaluateInput {

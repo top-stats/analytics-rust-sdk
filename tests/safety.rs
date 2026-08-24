@@ -11,7 +11,11 @@ use common::{client_with, ErrorCollector, FakeTransport, SleepRecorder};
 fn capture_never_panics_on_bad_input() {
     let transport = FakeTransport::always_accepted();
     let collector = ErrorCollector::new();
-    let client = client_with(Arc::clone(&transport), &collector, SleepRecorder::new().as_sleeper());
+    let client = client_with(
+        Arc::clone(&transport),
+        &collector,
+        SleepRecorder::new().as_sleeper(),
+    );
 
     // Empty name, oversized name, oversized reserved fields, empty property
     // key: every one reports instead of panicking.
@@ -48,7 +52,10 @@ fn queue_overflow_drops_the_oldest_and_reports() {
         .flush_at(1_000)
         .max_queue_size(2)
         .on_error(Arc::new(move |error| {
-            sink.errors.lock().expect("errors lock").push(error.to_string());
+            sink.errors
+                .lock()
+                .expect("errors lock")
+                .push(error.to_string());
         }))
         .build()
         .expect("client builds");

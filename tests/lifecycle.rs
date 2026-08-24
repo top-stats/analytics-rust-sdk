@@ -11,7 +11,11 @@ use common::{client_with, ErrorCollector, FakeTransport, SleepRecorder};
 fn shutdown_flushes_and_is_idempotent() {
     let transport = FakeTransport::always_accepted();
     let collector = ErrorCollector::new();
-    let client = client_with(Arc::clone(&transport), &collector, SleepRecorder::new().as_sleeper());
+    let client = client_with(
+        Arc::clone(&transport),
+        &collector,
+        SleepRecorder::new().as_sleeper(),
+    );
 
     client.capture("event", None, CaptureOptions::default());
     client.shutdown();
@@ -24,7 +28,11 @@ fn shutdown_flushes_and_is_idempotent() {
 fn capture_after_shutdown_reports_instead_of_sending() {
     let transport = FakeTransport::always_accepted();
     let collector = ErrorCollector::new();
-    let client = client_with(Arc::clone(&transport), &collector, SleepRecorder::new().as_sleeper());
+    let client = client_with(
+        Arc::clone(&transport),
+        &collector,
+        SleepRecorder::new().as_sleeper(),
+    );
 
     client.shutdown();
     client.capture("late", None, CaptureOptions::default());
@@ -42,7 +50,11 @@ fn drop_flushes_buffered_events() {
     let collector = ErrorCollector::new();
 
     {
-        let client = client_with(Arc::clone(&transport), &collector, SleepRecorder::new().as_sleeper());
+        let client = client_with(
+            Arc::clone(&transport),
+            &collector,
+            SleepRecorder::new().as_sleeper(),
+        );
         client.capture("event", None, CaptureOptions::default());
         // Client dropped here without an explicit shutdown.
     }
@@ -62,7 +74,10 @@ fn the_flush_at_threshold_triggers_a_background_send() {
         .flush_at(2)
         .flush_interval(Duration::from_millis(50))
         .on_error(Arc::new(move |error| {
-            sink.errors.lock().expect("errors lock").push(error.to_string());
+            sink.errors
+                .lock()
+                .expect("errors lock")
+                .push(error.to_string());
         }))
         .build()
         .expect("client builds");
@@ -90,7 +105,11 @@ fn blank_topstats_host_env_is_treated_as_unset() {
     let collector = ErrorCollector::new();
 
     std::env::set_var("TOPSTATS_HOST", "   ");
-    let client = client_with(Arc::clone(&transport), &collector, SleepRecorder::new().as_sleeper());
+    let client = client_with(
+        Arc::clone(&transport),
+        &collector,
+        SleepRecorder::new().as_sleeper(),
+    );
     client.capture("event", None, CaptureOptions::default());
     client.flush();
     std::env::remove_var("TOPSTATS_HOST");
@@ -110,7 +129,10 @@ fn builder_host_overrides_the_default_and_trailing_slash_is_trimmed() {
         .flush_at(1_000)
         .host("https://staging.example.com/")
         .on_error(Arc::new(move |error| {
-            sink.errors.lock().expect("errors lock").push(error.to_string());
+            sink.errors
+                .lock()
+                .expect("errors lock")
+                .push(error.to_string());
         }))
         .build()
         .expect("client builds");

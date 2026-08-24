@@ -11,7 +11,11 @@ use common::{client_with, ErrorCollector, FakeTransport, SleepRecorder};
 fn batches_split_at_the_event_count_cap() {
     let transport = FakeTransport::always_accepted();
     let collector = ErrorCollector::new();
-    let client = client_with(Arc::clone(&transport), &collector, SleepRecorder::new().as_sleeper());
+    let client = client_with(
+        Arc::clone(&transport),
+        &collector,
+        SleepRecorder::new().as_sleeper(),
+    );
 
     for _ in 0..(MAX_BATCH_SIZE + 1) {
         client.capture("tick", None, CaptureOptions::default());
@@ -22,7 +26,10 @@ fn batches_split_at_the_event_count_cap() {
 
     let first: Value = serde_json::from_str(&transport.request(0).body).expect("json");
     let second: Value = serde_json::from_str(&transport.request(1).body).expect("json");
-    assert_eq!(first["events"].as_array().expect("array").len(), MAX_BATCH_SIZE);
+    assert_eq!(
+        first["events"].as_array().expect("array").len(),
+        MAX_BATCH_SIZE
+    );
     assert_eq!(second["events"].as_array().expect("array").len(), 1);
 }
 
@@ -30,7 +37,11 @@ fn batches_split_at_the_event_count_cap() {
 fn batches_split_at_the_body_byte_limit() {
     let transport = FakeTransport::always_accepted();
     let collector = ErrorCollector::new();
-    let client = client_with(Arc::clone(&transport), &collector, SleepRecorder::new().as_sleeper());
+    let client = client_with(
+        Arc::clone(&transport),
+        &collector,
+        SleepRecorder::new().as_sleeper(),
+    );
 
     // Three events of ~900KB each cannot share one 2 MiB body.
     let payload = "x".repeat(900_000);
@@ -55,7 +66,11 @@ fn batches_split_at_the_body_byte_limit() {
 fn an_oversized_event_is_dropped_and_reported_never_sent() {
     let transport = FakeTransport::always_accepted();
     let collector = ErrorCollector::new();
-    let client = client_with(Arc::clone(&transport), &collector, SleepRecorder::new().as_sleeper());
+    let client = client_with(
+        Arc::clone(&transport),
+        &collector,
+        SleepRecorder::new().as_sleeper(),
+    );
 
     let mut map = Map::new();
     map.insert("blob".to_owned(), json!("x".repeat(70_000)));
