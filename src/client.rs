@@ -203,23 +203,34 @@ impl Inner {
     }
 }
 
+// The shutdown flag is only ever set while holding the queue mutex, and this
+// loop only waits while holding it too, so a shutdown notification cannot be
+// lost between the flag check and the wait - the classic lost-wakeup race
+// that would otherwise leave join() blocked for a full flush interval.
 fn spawn_worker(inner: Arc<Inner>) -> JoinHandle<()> {
     std::thread::spawn(move || loop {
-        {
+        let should_exit = {
             let queue = match inner.queue.lock() {
                 Ok(guard) => guard,
                 Err(poisoned) => poisoned.into_inner(),
             };
 
-            let (_guard, _timeout) = match inner.wake.wait_timeout(queue, inner.flush_interval) {
-                Ok(result) => result,
-                Err(poisoned) => poisoned.into_inner(),
-            };
-        }
+            if inner.shut_down.load(Ordering::SeqCst) {
+                true
+            } else {
+                let (_guard, _timeout) = match inner.wake.wait_timeout(queue, inner.flush_interval)
+                {
+                    Ok(result) => result,
+                    Err(poisoned) => poisoned.into_inner(),
+                };
+
+                inner.shut_down.load(Ordering::SeqCst)
+            }
+        };
 
         inner.drain_and_send();
 
-        if inner.shut_down.load(Ordering::SeqCst) {
+        if should_exit {
             return;
         }
     })
@@ -308,7 +319,17 @@ impl Client {
     /// Flushes, stops the background thread, and joins it. Safe to call more
     /// than once; later calls are no-ops.
     pub fn shutdown(&self) {
-        if self.inner.shut_down.swap(true, Ordering::SeqCst) {
+        // Set the flag while holding the queue mutex so the worker cannot slip
+        // between its flag check and its wait and miss the notification.
+        let already_shut_down = {
+            let _queue = match self.inner.queue.lock() {
+                Ok(guard) => guard,
+                Err(poisoned) => poisoned.into_inner(),
+            };
+            self.inner.shut_down.swap(true, Ordering::SeqCst)
+        };
+
+        if already_shut_down {
             return;
         }
 
