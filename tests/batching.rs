@@ -43,12 +43,13 @@ fn batches_split_at_the_body_byte_limit() {
         SleepRecorder::new().as_sleeper(),
     );
 
-    // Three events of ~900KB each cannot share one 2 MiB body.
-    let payload = "x".repeat(900_000);
+    // Forty events of ~60KB each stay under the per-event cap but sum to
+    // ~2.4MB, which cannot share one 2 MiB body.
+    let payload = "x".repeat(60_000);
 
-    for _ in 0..3 {
+    for _ in 0..40 {
         let mut map = Map::new();
-        map.insert("blob".to_owned(), json!(payload));
+        map.insert("blob".to_owned(), json!(payload.clone()));
         client.capture("big", Some(map), CaptureOptions::default());
     }
     client.flush();
