@@ -102,7 +102,7 @@ impl ClientBuilder {
 
         let sleeper: Sleeper = match self.sleeper {
             Some(injected) => injected,
-            None => Arc::new(|duration| std::thread::sleep(duration)),
+            None => Arc::new(std::thread::sleep),
         };
 
         let on_error = match self.on_error {
