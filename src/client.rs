@@ -24,7 +24,9 @@ pub struct ClientBuilder {
     on_error: Option<ErrorHandler>,
     default_source: Option<String>,
     max_queue_size: usize,
+    #[cfg(test)]
     transport: Option<Arc<dyn Transport>>,
+    #[cfg(test)]
     sleeper: Option<Sleeper>,
 }
 
@@ -95,15 +97,23 @@ impl ClientBuilder {
         let host = resolve_host(self.host);
         let timeout = self.timeout;
 
+        #[cfg(test)]
         let transport = match self.transport {
             Some(injected) => injected,
             None => Arc::new(UreqTransport::new(timeout)),
         };
 
+        #[cfg(not(test))]
+        let transport = Arc::new(UreqTransport::new(timeout));
+
+        #[cfg(test)]
         let sleeper: Sleeper = match self.sleeper {
             Some(injected) => injected,
             None => Arc::new(std::thread::sleep),
         };
+
+        #[cfg(not(test))]
+        let sleeper = Arc::new(std::thread::sleep);
 
         let on_error = match self.on_error {
             Some(handler) => handler,
@@ -260,7 +270,9 @@ impl Client {
             on_error: None,
             default_source: None,
             max_queue_size: DEFAULT_MAX_QUEUE_SIZE,
+            #[cfg(test)]
             transport: None,
+            #[cfg(test)]
             sleeper: None,
         }
     }
