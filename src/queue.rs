@@ -1,19 +1,21 @@
 use std::collections::VecDeque;
 
-use crate::constants::{MAX_BATCH_SIZE, MAX_BODY_BYTES};
-use crate::event::SerialisedEvent;
+use crate::{
+    constants::{MAX_BATCH_SIZE, MAX_BODY_BYTES},
+    event::SerialisedEvent,
+};
 
 // `{"events":[` + `]}` around the comma-joined events.
 const WRAPPER_BYTES: usize = 13;
 
-pub(crate) struct BoundedQueue {
+pub struct BoundedQueue {
     events: VecDeque<SerialisedEvent>,
     max_size: usize,
 }
 
 impl BoundedQueue {
-    pub fn new(max_size: usize) -> Self {
-        BoundedQueue {
+    pub const fn new(max_size: usize) -> Self {
+        Self {
             events: VecDeque::new(),
             max_size,
         }
@@ -46,7 +48,7 @@ impl BoundedQueue {
         let mut current_bytes = WRAPPER_BYTES;
 
         while let Some(event) = self.events.pop_front() {
-            let separator = if current.is_empty() { 0 } else { 1 };
+            let separator: usize = (!current.is_empty()).into();
             let projected = current_bytes + separator + event.bytes;
 
             if !current.is_empty()
@@ -57,7 +59,7 @@ impl BoundedQueue {
                 current_bytes = WRAPPER_BYTES;
             }
 
-            current_bytes += if current.is_empty() { 0 } else { 1 } + event.bytes;
+            current_bytes += usize::from(!current.is_empty()) + event.bytes;
             current.push(event);
         }
 
@@ -99,7 +101,7 @@ mod tests {
     fn splits_at_batch_size() {
         let mut queue = BoundedQueue::new(10_000);
 
-        for _ in 0..(MAX_BATCH_SIZE + 1) {
+        for _ in 0..=MAX_BATCH_SIZE {
             queue.push(event_of(10));
         }
 

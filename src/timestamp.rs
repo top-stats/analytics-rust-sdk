@@ -15,30 +15,30 @@ pub enum Timestamp {
 
 impl From<SystemTime> for Timestamp {
     fn from(value: SystemTime) -> Self {
-        Timestamp::System(value)
+        Self::System(value)
     }
 }
 
 impl From<String> for Timestamp {
     fn from(value: String) -> Self {
-        Timestamp::Text(value)
+        Self::Text(value)
     }
 }
 
 impl From<&str> for Timestamp {
     fn from(value: &str) -> Self {
-        Timestamp::Text(value.to_owned())
+        Self::Text(value.to_owned())
     }
 }
 
-pub(crate) fn to_wire_timestamp(timestamp: &Timestamp) -> Result<String, Error> {
+pub fn to_wire_timestamp(timestamp: &Timestamp) -> Result<String, Error> {
     match timestamp {
         Timestamp::System(instant) => format_system_time(*instant),
         Timestamp::Text(text) => validate_wire_text(text),
     }
 }
 
-pub(crate) fn now_wire_timestamp() -> Result<String, Error> {
+pub fn now_wire_timestamp() -> Result<String, Error> {
     format_system_time(SystemTime::now())
 }
 
@@ -98,11 +98,11 @@ fn split_epoch(since_epoch: Duration) -> (CivilDate, TimeOfDay) {
         milliseconds,
     };
 
-    (civil_from_days(days as i64), time_of_day)
+    (civil_from_days(days as _), time_of_day)
 }
 
 /// Howard Hinnant's civil-from-days algorithm; exact over the full range.
-fn civil_from_days(days_since_epoch: i64) -> CivilDate {
+const fn civil_from_days(days_since_epoch: i64) -> CivilDate {
     let z = days_since_epoch + 719_468;
     let era = z.div_euclid(146_097);
     let day_of_era = z.rem_euclid(146_097);
@@ -117,8 +117,8 @@ fn civil_from_days(days_since_epoch: i64) -> CivilDate {
 
     CivilDate {
         year: adjusted_year,
-        month: month as u32,
-        day: day as u32,
+        month: month as _,
+        day: day as _,
     }
 }
 

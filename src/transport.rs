@@ -1,8 +1,9 @@
-use std::sync::Arc;
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
-use crate::constants::{INITIAL_RETRY_DELAY, MAX_RETRY_AFTER, MAX_RETRY_DELAY};
-use crate::error::Error;
+use crate::{
+    constants::{INITIAL_RETRY_DELAY, MAX_RETRY_AFTER, MAX_RETRY_DELAY},
+    error::Error,
+};
 
 pub struct TransportResponse {
     pub status: u16,
@@ -20,7 +21,7 @@ pub trait Transport: Send + Sync {
 /// a recorder and observe backoff without actually sleeping.
 pub type Sleeper = Arc<dyn Fn(Duration) + Send + Sync>;
 
-pub(crate) struct UreqTransport {
+pub struct UreqTransport {
     agent: ureq::Agent,
 }
 
@@ -35,7 +36,7 @@ impl UreqTransport {
             ))
             .build();
 
-        UreqTransport { agent }
+        Self { agent }
     }
 }
 
@@ -49,8 +50,7 @@ impl Transport for UreqTransport {
             .send_string(body);
 
         match result {
-            Ok(response) => Ok(read_response(response)),
-            Err(ureq::Error::Status(_, response)) => Ok(read_response(response)),
+            Ok(response) | Err(ureq::Error::Status(_, response)) => Ok(read_response(response)),
             // The ureq error text can include the URL but never the
             // Authorization header, so the key cannot leak through it.
             Err(ureq::Error::Transport(transport_error)) => Err(Error::Network {
@@ -176,8 +176,7 @@ fn pseudo_random_unit() -> f64 {
 
     let nanos = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .map(|duration| duration.subsec_nanos())
-        .unwrap_or(0);
+        .map_or(0, |duration| duration.subsec_nanos());
 
     f64::from(nanos % 1_000) / 1_000.0
 }

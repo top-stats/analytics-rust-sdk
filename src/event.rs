@@ -1,11 +1,13 @@
 use serde_json::{Map, Value};
 
-use crate::constants::{
-    MAX_ACTOR_LABEL_LENGTH, MAX_ACTOR_LENGTH, MAX_EVENT_BYTES, MAX_NAME_LENGTH,
-    MAX_PROPERTY_KEY_LENGTH, MAX_SOURCE_LENGTH,
+use crate::{
+    constants::{
+        MAX_ACTOR_LABEL_LENGTH, MAX_ACTOR_LENGTH, MAX_EVENT_BYTES, MAX_NAME_LENGTH,
+        MAX_PROPERTY_KEY_LENGTH, MAX_SOURCE_LENGTH,
+    },
+    error::Error,
+    timestamp::{now_wire_timestamp, to_wire_timestamp, Timestamp},
 };
-use crate::error::Error;
-use crate::timestamp::{now_wire_timestamp, to_wire_timestamp, Timestamp};
 
 /// Optional per-event context for `capture`. All fields default to unset.
 #[derive(Debug, Clone, Default)]
@@ -16,7 +18,7 @@ pub struct CaptureOptions {
     pub timestamp: Option<Timestamp>,
 }
 
-pub(crate) struct SerialisedEvent {
+pub struct SerialisedEvent {
     pub json: String,
     pub bytes: usize,
 }
@@ -24,7 +26,7 @@ pub(crate) struct SerialisedEvent {
 /// Builds the wire object from an explicit allowlist of the six fields the API
 /// accepts, so nothing extra can ever reach the server's strict schema.
 /// Serialises exactly once, at enqueue time.
-pub(crate) fn serialise_event(
+pub fn serialise_event(
     name: &str,
     properties: Option<Map<String, Value>>,
     options: &CaptureOptions,
@@ -105,12 +107,13 @@ fn validate_length(value: &str, limit: usize, field: &str) -> Result<(), Error> 
 }
 
 fn validate_property_keys(properties: &Map<String, Value>) -> Result<(), Error> {
-    for key in properties.keys() {
-        if key.is_empty() || key.len() > MAX_PROPERTY_KEY_LENGTH {
-            return Err(Error::Validation {
-                message: format!("property keys must be 1 to {MAX_PROPERTY_KEY_LENGTH} characters"),
-            });
-        }
+    if properties
+        .keys()
+        .any(|key| key.is_empty() || key.len() > MAX_PROPERTY_KEY_LENGTH)
+    {
+        return Err(Error::Validation {
+            message: format!("property keys must be 1 to {MAX_PROPERTY_KEY_LENGTH} characters"),
+        });
     }
 
     Ok(())

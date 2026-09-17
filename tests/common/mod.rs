@@ -2,8 +2,10 @@
 // all of it, so unused-item warnings here would fail clippy -D warnings.
 #![allow(dead_code)]
 
-use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use std::{
+    sync::{Arc, Mutex},
+    time::Duration,
+};
 
 use topstats_analytics::{Client, Error, Sleeper, Transport, TransportResponse};
 
@@ -123,13 +125,13 @@ pub struct SleepRecorder {
 }
 
 impl SleepRecorder {
-    pub fn new() -> Arc<SleepRecorder> {
-        Arc::new(SleepRecorder {
+    pub fn new() -> Arc<Self> {
+        Arc::new(Self {
             slept: Mutex::new(Vec::new()),
         })
     }
 
-    pub fn as_sleeper(self: &Arc<SleepRecorder>) -> Sleeper {
+    pub fn as_sleeper(self: &Arc<Self>) -> Sleeper {
         let recorder = Arc::clone(self);
         Arc::new(move |duration| {
             recorder.slept.lock().expect("slept lock").push(duration);
@@ -143,8 +145,8 @@ pub struct ErrorCollector {
 }
 
 impl ErrorCollector {
-    pub fn new() -> Arc<ErrorCollector> {
-        Arc::new(ErrorCollector {
+    pub fn new() -> Arc<Self> {
+        Arc::new(Self {
             errors: Mutex::new(Vec::new()),
         })
     }

@@ -1,20 +1,26 @@
-use std::collections::HashMap;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Condvar, Mutex};
-use std::thread::JoinHandle;
-use std::time::Duration;
+use std::{
+    collections::HashMap,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc, Condvar, Mutex,
+    },
+    thread::JoinHandle,
+    time::Duration,
+};
 
 use serde_json::{Map, Value};
 
-use crate::constants::{
-    DEFAULT_FLUSH_AT, DEFAULT_FLUSH_INTERVAL, DEFAULT_HOST, DEFAULT_MAX_QUEUE_SIZE,
-    DEFAULT_MAX_RETRIES, DEFAULT_TIMEOUT, EVENTS_PATH, FLAGS_PATH,
+use crate::{
+    constants::{
+        DEFAULT_FLUSH_AT, DEFAULT_FLUSH_INTERVAL, DEFAULT_HOST, DEFAULT_MAX_QUEUE_SIZE,
+        DEFAULT_MAX_RETRIES, DEFAULT_TIMEOUT, EVENTS_PATH, FLAGS_PATH,
+    },
+    error::{default_error_handler, Error, ErrorHandler},
+    event::{serialise_event, CaptureOptions},
+    flags::{build_evaluate_body, EvaluateInput, EvaluateResponse, FlagResult},
+    queue::BoundedQueue,
+    transport::{send_with_retries, Sleeper, Transport, UreqTransport},
 };
-use crate::error::{default_error_handler, Error, ErrorHandler};
-use crate::event::{serialise_event, CaptureOptions};
-use crate::flags::{build_evaluate_body, EvaluateInput, EvaluateResponse, FlagResult};
-use crate::queue::BoundedQueue;
-use crate::transport::{send_with_retries, Sleeper, Transport, UreqTransport};
 
 pub struct ClientBuilder {
     api_key: String,
@@ -26,46 +32,56 @@ pub struct ClientBuilder {
     on_error: Option<ErrorHandler>,
     default_source: Option<String>,
     max_queue_size: usize,
+    #[cfg(feature = "test-injection")]
     transport: Option<Arc<dyn Transport>>,
+    #[cfg(feature = "test-injection")]
     sleeper: Option<Sleeper>,
 }
 
 impl ClientBuilder {
+    #[must_use]
     pub fn host(mut self, host: impl Into<String>) -> Self {
         self.host = Some(host.into());
         self
     }
 
+    #[must_use]
     pub fn flush_at(mut self, flush_at: usize) -> Self {
         self.flush_at = flush_at.max(1);
         self
     }
 
-    pub fn flush_interval(mut self, interval: Duration) -> Self {
+    #[must_use]
+    pub const fn flush_interval(mut self, interval: Duration) -> Self {
         self.flush_interval = interval;
         self
     }
 
-    pub fn max_retries(mut self, max_retries: u32) -> Self {
+    #[must_use]
+    pub const fn max_retries(mut self, max_retries: u32) -> Self {
         self.max_retries = max_retries;
         self
     }
 
-    pub fn timeout(mut self, timeout: Duration) -> Self {
+    #[must_use]
+    pub const fn timeout(mut self, timeout: Duration) -> Self {
         self.timeout = timeout;
         self
     }
 
+    #[must_use]
     pub fn on_error(mut self, handler: ErrorHandler) -> Self {
         self.on_error = Some(handler);
         self
     }
 
+    #[must_use]
     pub fn default_source(mut self, source: impl Into<String>) -> Self {
         self.default_source = Some(source.into());
         self
     }
 
+    #[must_use]
     pub fn max_queue_size(mut self, max_queue_size: usize) -> Self {
         self.max_queue_size = max_queue_size.max(1);
         self
@@ -73,6 +89,9 @@ impl ClientBuilder {
 
     /// Replaces the HTTP layer. Exists so tests inject a fake and never touch
     /// the network; production code should not need it.
+    #[cfg(feature = "test-injection")]
+    #[doc(hidden)]
+    #[must_use]
     pub fn transport(mut self, transport: Arc<dyn Transport>) -> Self {
         self.transport = Some(transport);
         self
@@ -80,6 +99,9 @@ impl ClientBuilder {
 
     /// Replaces the retry sleep. Exists so tests observe backoff without
     /// actually waiting.
+    #[cfg(feature = "test-injection")]
+    #[doc(hidden)]
+    #[must_use]
     pub fn sleeper(mut self, sleeper: Sleeper) -> Self {
         self.sleeper = Some(sleeper);
         self
@@ -95,20 +117,25 @@ impl ClientBuilder {
         let host = resolve_host(self.host);
         let timeout = self.timeout;
 
+        #[cfg(feature = "test-injection")]
         let transport = match self.transport {
             Some(injected) => injected,
             None => Arc::new(UreqTransport::new(timeout)),
         };
 
+        #[cfg(not(feature = "test-injection"))]
+        let transport = Arc::new(UreqTransport::new(timeout));
+
+        #[cfg(feature = "test-injection")]
         let sleeper: Sleeper = match self.sleeper {
             Some(injected) => injected,
             None => Arc::new(std::thread::sleep),
         };
 
-        let on_error = match self.on_error {
-            Some(handler) => handler,
-            None => default_error_handler(),
-        };
+        #[cfg(not(feature = "test-injection"))]
+        let sleeper = Arc::new(std::thread::sleep);
+
+        let on_error = self.on_error.unwrap_or_else(default_error_handler);
 
         let inner = Arc::new(Inner {
             api_key: self.api_key,
@@ -215,7 +242,7 @@ fn spawn_worker(inner: Arc<Inner>) -> JoinHandle<()> {
                 Err(poisoned) => poisoned.into_inner(),
             };
 
-            if inner.shut_down.load(Ordering::SeqCst) {
+            if inner.shut_down.load(Ordering::Acquire) {
                 true
             } else {
                 let (_guard, _timeout) = match inner.wake.wait_timeout(queue, inner.flush_interval)
@@ -224,7 +251,7 @@ fn spawn_worker(inner: Arc<Inner>) -> JoinHandle<()> {
                     Err(poisoned) => poisoned.into_inner(),
                 };
 
-                inner.shut_down.load(Ordering::SeqCst)
+                inner.shut_down.load(Ordering::Acquire)
             }
         };
 
@@ -245,8 +272,8 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn new(api_key: impl Into<String>) -> Result<Client, Error> {
-        Client::builder(api_key).build()
+    pub fn new(api_key: impl Into<String>) -> Result<Self, Error> {
+        Self::builder(api_key).build()
     }
 
     pub fn builder(api_key: impl Into<String>) -> ClientBuilder {
@@ -260,7 +287,9 @@ impl Client {
             on_error: None,
             default_source: None,
             max_queue_size: DEFAULT_MAX_QUEUE_SIZE,
+            #[cfg(feature = "test-injection")]
             transport: None,
+            #[cfg(feature = "test-injection")]
             sleeper: None,
         }
     }
@@ -273,7 +302,7 @@ impl Client {
         properties: Option<Map<String, Value>>,
         options: CaptureOptions,
     ) {
-        if self.inner.shut_down.load(Ordering::SeqCst) {
+        if self.inner.shut_down.load(Ordering::Acquire) {
             self.inner.report(&Error::ShutDown);
             return;
         }
@@ -326,7 +355,7 @@ impl Client {
                 Ok(guard) => guard,
                 Err(poisoned) => poisoned.into_inner(),
             };
-            self.inner.shut_down.swap(true, Ordering::SeqCst)
+            self.inner.shut_down.swap(true, Ordering::Release)
         };
 
         if already_shut_down {
@@ -382,10 +411,8 @@ impl Client {
         let mut narrowed = input;
         narrowed.keys = Some(vec![key.to_owned()]);
 
-        match self.evaluate(narrowed) {
-            Ok(flags) => flags.get(key).map(|flag| flag.value).unwrap_or(false),
-            Err(_) => false,
-        }
+        self.evaluate(narrowed)
+            .is_ok_and(|flags| flags.get(key).is_some_and(|flag| flag.value))
     }
 }
 

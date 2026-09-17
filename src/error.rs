@@ -1,5 +1,4 @@
-use std::fmt;
-use std::sync::Arc;
+use std::{fmt, sync::Arc};
 
 /// Every failure the SDK can surface. The API key is never included in any
 /// variant, so no error can leak it through Display or Debug output.
@@ -33,10 +32,11 @@ pub enum Error {
 impl Error {
     /// Whether the transport would retry this failure: 429, 5xx, and network
     /// errors only. 400, 401, 402, and 413 are permanent.
-    pub fn is_retryable(&self) -> bool {
+    #[must_use]
+    pub const fn is_retryable(&self) -> bool {
         match self {
-            Error::Api { status, .. } => *status == 429 || *status >= 500,
-            Error::Network { .. } => true,
+            Self::Api { status, .. } => *status == 429 || *status >= 500,
+            Self::Network { .. } => true,
             _ => false,
         }
     }
@@ -45,20 +45,20 @@ impl Error {
 impl fmt::Display for Error {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::Validation { message } => write!(formatter, "validation: {message}"),
-            Error::EventTooLarge { name, bytes, limit } => write!(
+            Self::Validation { message } => write!(formatter, "validation: {message}"),
+            Self::EventTooLarge { name, bytes, limit } => write!(
                 formatter,
                 "event \"{name}\" is {bytes} bytes, over the {limit} byte limit; dropped"
             ),
-            Error::QueueOverflow { dropped } => write!(
+            Self::QueueOverflow { dropped } => write!(
                 formatter,
                 "queue full; dropped the oldest {dropped} buffered event(s)"
             ),
-            Error::Api {
+            Self::Api {
                 status, message, ..
             } => write!(formatter, "api returned {status}: {message}"),
-            Error::Network { message } => write!(formatter, "network: {message}"),
-            Error::ShutDown => write!(formatter, "client is shut down"),
+            Self::Network { message } => write!(formatter, "network: {message}"),
+            Self::ShutDown => write!(formatter, "client is shut down"),
         }
     }
 }
@@ -69,7 +69,7 @@ impl std::error::Error for Error {}
 /// caller code.
 pub type ErrorHandler = Arc<dyn Fn(&Error) + Send + Sync>;
 
-pub(crate) fn default_error_handler() -> ErrorHandler {
+pub fn default_error_handler() -> ErrorHandler {
     Arc::new(|error| {
         eprintln!("[topstats] {error}");
     })
