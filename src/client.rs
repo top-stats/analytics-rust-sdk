@@ -71,6 +71,7 @@ impl ClientBuilder {
 
     /// Replaces the HTTP layer. Exists so tests inject a fake and never touch
     /// the network; production code should not need it.
+    #[cfg(test)]
     pub fn transport(mut self, transport: Arc<dyn Transport>) -> Self {
         self.transport = Some(transport);
         self
@@ -78,6 +79,7 @@ impl ClientBuilder {
 
     /// Replaces the retry sleep. Exists so tests observe backoff without
     /// actually waiting.
+    #[cfg(test)]
     pub fn sleeper(mut self, sleeper: Sleeper) -> Self {
         self.sleeper = Some(sleeper);
         self
