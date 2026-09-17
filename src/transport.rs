@@ -33,7 +33,7 @@ impl UreqTransport {
             ))
             .build();
 
-        UreqTransport { agent }
+        Self { agent }
     }
 }
 

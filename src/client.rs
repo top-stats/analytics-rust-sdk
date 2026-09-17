@@ -245,8 +245,8 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn new(api_key: impl Into<String>) -> Result<Client, Error> {
-        Client::builder(api_key).build()
+    pub fn new(api_key: impl Into<String>) -> Result<Self, Error> {
+        Self::builder(api_key).build()
     }
 
     pub fn builder(api_key: impl Into<String>) -> ClientBuilder {

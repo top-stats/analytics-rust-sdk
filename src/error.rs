@@ -34,8 +34,8 @@ impl Error {
     /// errors only. 400, 401, 402, and 413 are permanent.
     pub fn is_retryable(&self) -> bool {
         match self {
-            Error::Api { status, .. } => *status == 429 || *status >= 500,
-            Error::Network { .. } => true,
+            Self::Api { status, .. } => *status == 429 || *status >= 500,
+            Self::Network { .. } => true,
             _ => false,
         }
     }
@@ -44,20 +44,20 @@ impl Error {
 impl fmt::Display for Error {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::Validation { message } => write!(formatter, "validation: {message}"),
-            Error::EventTooLarge { name, bytes, limit } => write!(
+            Self::Validation { message } => write!(formatter, "validation: {message}"),
+            Self::EventTooLarge { name, bytes, limit } => write!(
                 formatter,
                 "event \"{name}\" is {bytes} bytes, over the {limit} byte limit; dropped"
             ),
-            Error::QueueOverflow { dropped } => write!(
+            Self::QueueOverflow { dropped } => write!(
                 formatter,
                 "queue full; dropped the oldest {dropped} buffered event(s)"
             ),
-            Error::Api {
+            Self::Api {
                 status, message, ..
             } => write!(formatter, "api returned {status}: {message}"),
-            Error::Network { message } => write!(formatter, "network: {message}"),
-            Error::ShutDown => write!(formatter, "client is shut down"),
+            Self::Network { message } => write!(formatter, "network: {message}"),
+            Self::ShutDown => write!(formatter, "client is shut down"),
         }
     }
 }
