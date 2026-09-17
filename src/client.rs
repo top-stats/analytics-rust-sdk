@@ -1,4 +1,12 @@
-use std::{collections::HashMap, sync::{atomic::{AtomicBool, Ordering}, Arc, Condvar, Mutex}, thread::JoinHandle, time::Duration};
+use std::{
+    collections::HashMap,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc, Condvar, Mutex,
+    },
+    thread::JoinHandle,
+    time::Duration,
+};
 
 use serde_json::{Map, Value};
 
@@ -401,7 +409,8 @@ impl Client {
         let mut narrowed = input;
         narrowed.keys = Some(vec![key.to_owned()]);
 
-        self.evaluate(narrowed).is_ok_and(|flags| flags.get(key).is_some_and(|flag| flag.value))
+        self.evaluate(narrowed)
+            .is_ok_and(|flags| flags.get(key).is_some_and(|flag| flag.value))
     }
 }
 

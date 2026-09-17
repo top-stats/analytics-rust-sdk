@@ -1,6 +1,9 @@
 use std::collections::VecDeque;
 
-use crate::{constants::{MAX_BATCH_SIZE, MAX_BODY_BYTES}, event::SerialisedEvent};
+use crate::{
+    constants::{MAX_BATCH_SIZE, MAX_BODY_BYTES},
+    event::SerialisedEvent,
+};
 
 // `{"events":[` + `]}` around the comma-joined events.
 const WRAPPER_BYTES: usize = 13;

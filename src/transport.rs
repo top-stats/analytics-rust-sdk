@@ -1,6 +1,9 @@
 use std::{sync::Arc, time::Duration};
 
-use crate::{constants::{INITIAL_RETRY_DELAY, MAX_RETRY_AFTER, MAX_RETRY_DELAY}, error::Error};
+use crate::{
+    constants::{INITIAL_RETRY_DELAY, MAX_RETRY_AFTER, MAX_RETRY_DELAY},
+    error::Error,
+};
 
 pub struct TransportResponse {
     pub status: u16,

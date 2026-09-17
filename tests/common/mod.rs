@@ -2,7 +2,10 @@
 // all of it, so unused-item warnings here would fail clippy -D warnings.
 #![allow(dead_code)]
 
-use std::{sync::{Arc, Mutex}, time::Duration};
+use std::{
+    sync::{Arc, Mutex},
+    time::Duration,
+};
 
 use topstats_analytics::{Client, Error, Sleeper, Transport, TransportResponse};
 
