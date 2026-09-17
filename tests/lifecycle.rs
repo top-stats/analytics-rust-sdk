@@ -1,7 +1,6 @@
 mod common;
 
-use std::sync::Arc;
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
 use topstats_analytics::{CaptureOptions, Client};
 

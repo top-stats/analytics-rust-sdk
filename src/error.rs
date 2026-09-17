@@ -1,5 +1,4 @@
-use std::fmt;
-use std::sync::Arc;
+use std::{fmt, sync::Arc};
 
 /// Every failure the SDK can surface. The API key is never included in any
 /// variant, so no error can leak it through Display or Debug output.

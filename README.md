@@ -38,8 +38,7 @@ grouped.
 ## Configuration
 
 ```rust
-use std::sync::Arc;
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 use topstats_analytics::Client;
 
 let client = Client::builder("ts_live_your_key")

@@ -1,20 +1,18 @@
-use std::collections::HashMap;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Condvar, Mutex};
-use std::thread::JoinHandle;
-use std::time::Duration;
+use std::{collections::HashMap, sync::{atomic::{AtomicBool, Ordering}, Arc, Condvar, Mutex}, thread::JoinHandle, time::Duration};
 
 use serde_json::{Map, Value};
 
-use crate::constants::{
-    DEFAULT_FLUSH_AT, DEFAULT_FLUSH_INTERVAL, DEFAULT_HOST, DEFAULT_MAX_QUEUE_SIZE,
-    DEFAULT_MAX_RETRIES, DEFAULT_TIMEOUT, EVENTS_PATH, FLAGS_PATH,
+use crate::{
+    constants::{
+        DEFAULT_FLUSH_AT, DEFAULT_FLUSH_INTERVAL, DEFAULT_HOST, DEFAULT_MAX_QUEUE_SIZE,
+        DEFAULT_MAX_RETRIES, DEFAULT_TIMEOUT, EVENTS_PATH, FLAGS_PATH,
+    },
+    error::{default_error_handler, Error, ErrorHandler},
+    event::{serialise_event, CaptureOptions},
+    flags::{build_evaluate_body, EvaluateInput, EvaluateResponse, FlagResult},
+    queue::BoundedQueue,
+    transport::{send_with_retries, Sleeper, Transport, UreqTransport},
 };
-use crate::error::{default_error_handler, Error, ErrorHandler};
-use crate::event::{serialise_event, CaptureOptions};
-use crate::flags::{build_evaluate_body, EvaluateInput, EvaluateResponse, FlagResult};
-use crate::queue::BoundedQueue;
-use crate::transport::{send_with_retries, Sleeper, Transport, UreqTransport};
 
 pub struct ClientBuilder {
     api_key: String,

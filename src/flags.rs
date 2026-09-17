@@ -3,8 +3,7 @@ use std::collections::HashMap;
 use serde::Deserialize;
 use serde_json::{Map, Value};
 
-use crate::constants::{MAX_FLAG_ACTOR_LENGTH, MAX_FLAG_KEYS};
-use crate::error::Error;
+use crate::{constants::{MAX_FLAG_ACTOR_LENGTH, MAX_FLAG_KEYS}, error::Error};
 
 /// Input for `evaluate`. Every field is optional; keys are only required to be
 /// non-empty strings - the API imposes no charset or length rule on them.
