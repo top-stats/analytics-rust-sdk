@@ -11,7 +11,7 @@ pub(crate) struct BoundedQueue {
 }
 
 impl BoundedQueue {
-    pub fn new(max_size: usize) -> Self {
+    pub const fn new(max_size: usize) -> Self {
         BoundedQueue {
             events: VecDeque::new(),
             max_size,

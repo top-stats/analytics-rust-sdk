@@ -39,17 +39,17 @@ impl ClientBuilder {
         self
     }
 
-    pub fn flush_interval(mut self, interval: Duration) -> Self {
+    pub const fn flush_interval(mut self, interval: Duration) -> Self {
         self.flush_interval = interval;
         self
     }
 
-    pub fn max_retries(mut self, max_retries: u32) -> Self {
+    pub const fn max_retries(mut self, max_retries: u32) -> Self {
         self.max_retries = max_retries;
         self
     }
 
-    pub fn timeout(mut self, timeout: Duration) -> Self {
+    pub const fn timeout(mut self, timeout: Duration) -> Self {
         self.timeout = timeout;
         self
     }
