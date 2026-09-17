@@ -15,19 +15,19 @@ pub enum Timestamp {
 
 impl From<SystemTime> for Timestamp {
     fn from(value: SystemTime) -> Self {
-        Timestamp::System(value)
+        Self::System(value)
     }
 }
 
 impl From<String> for Timestamp {
     fn from(value: String) -> Self {
-        Timestamp::Text(value)
+        Self::Text(value)
     }
 }
 
 impl From<&str> for Timestamp {
     fn from(value: &str) -> Self {
-        Timestamp::Text(value.to_owned())
+        Self::Text(value.to_owned())
     }
 }
 
