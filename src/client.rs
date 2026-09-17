@@ -32,9 +32,9 @@ pub struct ClientBuilder {
     on_error: Option<ErrorHandler>,
     default_source: Option<String>,
     max_queue_size: usize,
-    #[cfg(test)]
+    #[cfg(feature = "test-injection")]
     transport: Option<Arc<dyn Transport>>,
-    #[cfg(test)]
+    #[cfg(feature = "test-injection")]
     sleeper: Option<Sleeper>,
 }
 
@@ -89,7 +89,8 @@ impl ClientBuilder {
 
     /// Replaces the HTTP layer. Exists so tests inject a fake and never touch
     /// the network; production code should not need it.
-    #[cfg(test)]
+    #[cfg(feature = "test-injection")]
+    #[doc(hidden)]
     #[must_use]
     pub fn transport(mut self, transport: Arc<dyn Transport>) -> Self {
         self.transport = Some(transport);
@@ -98,7 +99,8 @@ impl ClientBuilder {
 
     /// Replaces the retry sleep. Exists so tests observe backoff without
     /// actually waiting.
-    #[cfg(test)]
+    #[cfg(feature = "test-injection")]
+    #[doc(hidden)]
     #[must_use]
     pub fn sleeper(mut self, sleeper: Sleeper) -> Self {
         self.sleeper = Some(sleeper);
@@ -115,22 +117,22 @@ impl ClientBuilder {
         let host = resolve_host(self.host);
         let timeout = self.timeout;
 
-        #[cfg(test)]
+        #[cfg(feature = "test-injection")]
         let transport = match self.transport {
             Some(injected) => injected,
             None => Arc::new(UreqTransport::new(timeout)),
         };
 
-        #[cfg(not(test))]
+        #[cfg(not(feature = "test-injection"))]
         let transport = Arc::new(UreqTransport::new(timeout));
 
-        #[cfg(test)]
+        #[cfg(feature = "test-injection")]
         let sleeper: Sleeper = match self.sleeper {
             Some(injected) => injected,
             None => Arc::new(std::thread::sleep),
         };
 
-        #[cfg(not(test))]
+        #[cfg(not(feature = "test-injection"))]
         let sleeper = Arc::new(std::thread::sleep);
 
         let on_error = self.on_error.unwrap_or_else(default_error_handler);
@@ -285,9 +287,9 @@ impl Client {
             on_error: None,
             default_source: None,
             max_queue_size: DEFAULT_MAX_QUEUE_SIZE,
-            #[cfg(test)]
+            #[cfg(feature = "test-injection")]
             transport: None,
-            #[cfg(test)]
+            #[cfg(feature = "test-injection")]
             sleeper: None,
         }
     }

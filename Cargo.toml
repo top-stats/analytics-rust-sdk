@@ -9,6 +9,7 @@ repository = "https://github.com/top-stats/analytics-rust-sdk"
 homepage = "https://docs.topstats.gg/docs/analytics"
 keywords = ["analytics", "topstats", "events"]
 categories = ["api-bindings"]
+exclude = [".vscode/*", ".github/*", "tests/*"]
 
 # Rust has no HTTP, TLS, or JSON in the standard library, so this crate cannot
 # be zero-dependency like the Node, Python, Go, and PHP SDKs. These three are
@@ -20,3 +21,7 @@ ureq = "2"
 
 [lib]
 name = "topstats_analytics"
+
+[features]
+default = []
+test-injection = []
