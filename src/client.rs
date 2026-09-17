@@ -225,7 +225,7 @@ fn spawn_worker(inner: Arc<Inner>) -> JoinHandle<()> {
                 Err(poisoned) => poisoned.into_inner(),
             };
 
-            if inner.shut_down.load(Ordering::SeqCst) {
+            if inner.shut_down.load(Ordering::Acquire) {
                 true
             } else {
                 let (_guard, _timeout) = match inner.wake.wait_timeout(queue, inner.flush_interval)
@@ -234,7 +234,7 @@ fn spawn_worker(inner: Arc<Inner>) -> JoinHandle<()> {
                     Err(poisoned) => poisoned.into_inner(),
                 };
 
-                inner.shut_down.load(Ordering::SeqCst)
+                inner.shut_down.load(Ordering::Acquire)
             }
         };
 
@@ -285,7 +285,7 @@ impl Client {
         properties: Option<Map<String, Value>>,
         options: CaptureOptions,
     ) {
-        if self.inner.shut_down.load(Ordering::SeqCst) {
+        if self.inner.shut_down.load(Ordering::Acquire) {
             self.inner.report(&Error::ShutDown);
             return;
         }
@@ -338,7 +338,7 @@ impl Client {
                 Ok(guard) => guard,
                 Err(poisoned) => poisoned.into_inner(),
             };
-            self.inner.shut_down.swap(true, Ordering::SeqCst)
+            self.inner.shut_down.swap(true, Ordering::Release)
         };
 
         if already_shut_down {
