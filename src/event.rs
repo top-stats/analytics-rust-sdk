@@ -18,7 +18,7 @@ pub struct CaptureOptions {
     pub timestamp: Option<Timestamp>,
 }
 
-pub(crate) struct SerialisedEvent {
+pub struct SerialisedEvent {
     pub json: String,
     pub bytes: usize,
 }
@@ -26,7 +26,7 @@ pub(crate) struct SerialisedEvent {
 /// Builds the wire object from an explicit allowlist of the six fields the API
 /// accepts, so nothing extra can ever reach the server's strict schema.
 /// Serialises exactly once, at enqueue time.
-pub(crate) fn serialise_event(
+pub fn serialise_event(
     name: &str,
     properties: Option<Map<String, Value>>,
     options: &CaptureOptions,

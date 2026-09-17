@@ -31,41 +31,49 @@ pub struct ClientBuilder {
 }
 
 impl ClientBuilder {
+    #[must_use]
     pub fn host(mut self, host: impl Into<String>) -> Self {
         self.host = Some(host.into());
         self
     }
 
+    #[must_use]
     pub fn flush_at(mut self, flush_at: usize) -> Self {
         self.flush_at = flush_at.max(1);
         self
     }
 
+    #[must_use]
     pub const fn flush_interval(mut self, interval: Duration) -> Self {
         self.flush_interval = interval;
         self
     }
 
+    #[must_use]
     pub const fn max_retries(mut self, max_retries: u32) -> Self {
         self.max_retries = max_retries;
         self
     }
 
+    #[must_use]
     pub const fn timeout(mut self, timeout: Duration) -> Self {
         self.timeout = timeout;
         self
     }
 
+    #[must_use]
     pub fn on_error(mut self, handler: ErrorHandler) -> Self {
         self.on_error = Some(handler);
         self
     }
 
+    #[must_use]
     pub fn default_source(mut self, source: impl Into<String>) -> Self {
         self.default_source = Some(source.into());
         self
     }
 
+    #[must_use]
     pub fn max_queue_size(mut self, max_queue_size: usize) -> Self {
         self.max_queue_size = max_queue_size.max(1);
         self
@@ -74,6 +82,7 @@ impl ClientBuilder {
     /// Replaces the HTTP layer. Exists so tests inject a fake and never touch
     /// the network; production code should not need it.
     #[cfg(test)]
+    #[must_use]
     pub fn transport(mut self, transport: Arc<dyn Transport>) -> Self {
         self.transport = Some(transport);
         self
@@ -82,6 +91,7 @@ impl ClientBuilder {
     /// Replaces the retry sleep. Exists so tests observe backoff without
     /// actually waiting.
     #[cfg(test)]
+    #[must_use]
     pub fn sleeper(mut self, sleeper: Sleeper) -> Self {
         self.sleeper = Some(sleeper);
         self
@@ -115,10 +125,7 @@ impl ClientBuilder {
         #[cfg(not(test))]
         let sleeper = Arc::new(std::thread::sleep);
 
-        let on_error = match self.on_error {
-            Some(handler) => handler,
-            None => default_error_handler(),
-        };
+        let on_error = self.on_error.unwrap_or_else(default_error_handler);
 
         let inner = Arc::new(Inner {
             api_key: self.api_key,
@@ -394,10 +401,7 @@ impl Client {
         let mut narrowed = input;
         narrowed.keys = Some(vec![key.to_owned()]);
 
-        match self.evaluate(narrowed) {
-            Ok(flags) => flags.get(key).map(|flag| flag.value).unwrap_or(false),
-            Err(_) => false,
-        }
+        self.evaluate(narrowed).is_ok_and(|flags| flags.get(key).is_some_and(|flag| flag.value))
     }
 }
 

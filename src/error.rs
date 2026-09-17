@@ -32,7 +32,8 @@ pub enum Error {
 impl Error {
     /// Whether the transport would retry this failure: 429, 5xx, and network
     /// errors only. 400, 401, 402, and 413 are permanent.
-    pub fn is_retryable(&self) -> bool {
+    #[must_use]
+    pub const fn is_retryable(&self) -> bool {
         match self {
             Self::Api { status, .. } => *status == 429 || *status >= 500,
             Self::Network { .. } => true,
@@ -68,7 +69,7 @@ impl std::error::Error for Error {}
 /// caller code.
 pub type ErrorHandler = Arc<dyn Fn(&Error) + Send + Sync>;
 
-pub(crate) fn default_error_handler() -> ErrorHandler {
+pub fn default_error_handler() -> ErrorHandler {
     Arc::new(|error| {
         eprintln!("[topstats] {error}");
     })

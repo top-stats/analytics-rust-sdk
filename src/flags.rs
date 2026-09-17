@@ -23,18 +23,18 @@ pub struct FlagResult {
 }
 
 #[derive(Deserialize)]
-pub(crate) struct EvaluateResponse {
+pub struct EvaluateResponse {
     pub flags: HashMap<String, FlagResult>,
 }
 
-pub(crate) fn build_evaluate_body(input: &EvaluateInput) -> Result<String, Error> {
+pub fn build_evaluate_body(input: &EvaluateInput) -> Result<String, Error> {
     let mut body = Map::new();
 
-    if let Some(actor_key) = normalised(&input.actor_key, "actorKey")? {
+    if let Some(actor_key) = normalised(input.actor_key.as_ref(), "actorKey")? {
         body.insert("actorKey".to_owned(), Value::String(actor_key));
     }
 
-    if let Some(group_key) = normalised(&input.group_key, "groupKey")? {
+    if let Some(group_key) = normalised(input.group_key.as_ref(), "groupKey")? {
         body.insert("groupKey".to_owned(), Value::String(group_key));
     }
 
@@ -66,8 +66,8 @@ pub(crate) fn build_evaluate_body(input: &EvaluateInput) -> Result<String, Error
     })
 }
 
-fn normalised(field: &Option<String>, name: &str) -> Result<Option<String>, Error> {
-    let Some(raw) = field.as_deref() else {
+fn normalised(field: Option<&String>, name: &str) -> Result<Option<String>, Error> {
+    let Some(raw) = field else {
         return Ok(None);
     };
 
